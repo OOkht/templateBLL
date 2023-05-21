@@ -1,0 +1,1430 @@
+'
+'_____УПРАВЛЯЮЩИЙ БЛОК_____
+
+Dim err_subname As String
+Dim templatebook As Workbook
+Dim template As Worksheet
+Dim ws As Worksheet '
+Dim n As Long ' количество строк смещения между началом обрабатываемого диапазона на листе template и Level
+    Dim ЯА As Worksheet
+    Dim ЯЛ As Worksheet
+    Dim ЯП As Worksheet
+    Dim ЦО As Worksheet
+    Dim КЯ As Worksheet
+    Dim ЯИ As Worksheet
+'    Dim FGBDR As Worksheet
+'    Dim FGRKR As Worksheet
+    Dim lastrow_template As Long
+    Dim lastclmn_template As Long
+    Dim cellchecked As Range
+    Dim Level As Worksheet
+    Dim Levels As Long
+    Dim equalNamerow As Long
+    Dim templsheeet As Worksheet
+    Dim lastRow_Level As Long
+    Dim GroupRowF As Long
+    Dim GroupRowL As Long
+    Dim rowlevel As String
+    Dim equalNameclmn As Long
+    Dim GroupClmnF As Long
+    Dim GroupClmnL As Long
+    Dim numChildRow As New Collection
+    Dim GroupClmntemplsheeet As Worksheet
+    Dim endrowresearch As Long
+    Dim cellchecked2 As Long
+    Dim rowChecked2 As Long
+    Dim lastclmn_fg As Long
+    Dim endclmnresearch As Long
+    Dim stopgrouplevels As Long
+    Dim Sl As Range
+    Dim Cf As Range
+    Dim monthrename As String
+    Dim SWEET4 As Worksheet
+   
+    
+    
+    Dim rowChecked As Range
+ 
+
+
+
+Sub process()
+   
+'    On Error GoTo Log
+'err_subname = "process"
+'    Call froze
+    Call importData
+    Call declareVars
+    Call DATAfil
+    Call DelGabidge
+    
+'    Call Coloring_rows
+'    Call horror
+    Call Group_row
+    Call Group_column
+'    Call saveWSAsWB("MKR", ThisWorkbook.Path & "\output\template.xlsx")
+    Call saveOutputs
+    Call unfroze
+    Exit Sub
+    
+'Log:
+'Call err_Log(err_subname)
+'Resume Next
+
+End Sub
+
+Sub declareVars()
+    Set ЯА = Worksheets("ЯА")
+    Set ЯЛ = Worksheets("ЯЛ")
+    Set ЯИ = Worksheets("ЯИ")
+    Set ЯП = Worksheets("ЯП")
+    Set ЦО = Worksheets("ЦО")
+    Set КЯ = Worksheets("КЯ")
+    Set CO = Worksheets("CO")
+    Set KAY = Worksheets("KYA")
+    Set YAA = Worksheets("YAA")
+    Set YAI = Worksheets("YAI")
+    Set YAL = Worksheets("YAL")
+    Set YAP = Worksheets("YAP")
+    Set Level = Worksheets("Level")
+'    Set SWEET4 = Worksheets("SWITCH")
+'    Set FGBDR = Worksheets("FGBDR")
+'    Set FGRKR = Worksheets("FGRKR")
+    Set templatebook = ThisWorkbook
+'    Set ws = templatebook.Worksheets
+End Sub
+
+'_________ИМПОРТ_______
+
+Sub importData()   '+
+    
+    Call doImportCsv(ThisWorkbook.Path & "/CO.csv", "CO")
+    Call doImportCsv(ThisWorkbook.Path & "/KYA.csv", "KYA")
+    Call doImportCsv(ThisWorkbook.Path & "/YAA.csv", "YAA")
+    Call doImportCsv(ThisWorkbook.Path & "/YAI.csv", "YAI")
+    Call doImportCsv(ThisWorkbook.Path & "/YAL.csv", "YAL")
+    Call doImportCsv(ThisWorkbook.Path & "/YAP.csv", "YAP")
+    Call doImportCsv(ThisWorkbook.Path & "/Level.csv", "Level")
+'    Call doImportCsv(ThisWorkbook.Path & "/FGBDR.csv", "FGBDR")
+'    Call doImportCsv(ThisWorkbook.Path & "/FGRKR.csv", "FGRKR")
+'    Call doImportCsv(ThisWorkbook.Path & "/FGMKR.csv", "FGMKR")
+'    Call doImportCsv(ThisWorkbook.Path & "/FGPMR.csv", "FGPMR")
+'    Call doImportCsv(ThisWorkbook.Path & "/FGYAI.csv", "FGYAI")
+'    Call doImportCsv(ThisWorkbook.Path & "/FGYAM.csv", "FGYAM")
+'    Call doImportCsv(ThisWorkbook.Path & "/SWITCH.csv", "SWITCH")
+End Sub
+
+Sub doImportCsv(filePath As String, outSheet As String)   '+
+
+    Dim rootDir As String
+    rootDir = ActiveWorkbook.Path
+    Dim connectionName As String
+    Set templatebook = ThisWorkbook
+    Set ws = templatebook.Worksheets.Add
+    ws.Name = outSheet
+    'connectionName = filePath
+    
+    Set wb = Workbooks.Open(Filename:=filePath, Local:=True)
+   
+    aData = wb.Worksheets(1).UsedRange.Value
+    lRows = UBound(aData, 1)
+    lCols = UBound(aData, 2)
+       
+       
+       templatebook.Worksheets(outSheet).Activate
+       If ws.Name = "Level" Or ws.Name = "FGBDR" Or ws.Name = "FGRKR" Or ws.Name = "FGMKR" Or ws.Name = "FGPMR" Or ws.Name = "FGYAI" Or ws.Name = "FGYAM" Or ws.Name = "SWITCH" Then
+        templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(2, 1), templatebook.Worksheets(outSheet).Cells(Rows.Count, Columns.Count)).NumberFormat = "@"
+       ElseIf ws.Name = "Level" Then
+        templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(2, 1), templatebook.Worksheets(outSheet).Cells(Rows.Count, Columns.Count)).NumberFormat = "@"
+       Else:
+        templatebook.Worksheets(outSheet).Activate
+        templatebook.Worksheets(outSheet).Range(Cells(5, 3), Cells(Rows.Count, Columns.Count)).NumberFormat = "#,##0.00"
+        templatebook.Worksheets(outSheet).Range(Cells(3, 1), Cells(3, Columns.Count)).NumberFormat = "@"
+        templatebook.Worksheets(outSheet).Range(Cells(1, 1), Cells(4, Columns.Count)).NumberFormat = "@"
+       End If
+
+        With templatebook.Worksheets(outSheet)
+            .Range(.Cells(1, 1), .Cells(lRows, lCols)).Value = aData
+        End With
+
+    wb.Close
+End Sub
+Sub DATAfil()
+'Set ws = templatebook.Worksheets
+Dim outSheet As String
+  For Each ws In templatebook.Worksheets
+    lastrow_template = lastRow(ws)
+    lastclmn_template = lastColumn3(ws)
+    outSheet = ws.Name
+    
+         If ws.Name = "KYA" Then
+           templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(5, 2), templatebook.Worksheets(outSheet).Cells(lastrow_template, 2)).Copy
+            КЯ.Cells(3, 1).PasteSpecial (xlPasteValues)
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(3, 3), templatebook.Worksheets(outSheet).Cells(lastrow_template, lastclmn_template)).Copy
+            КЯ.Cells(1, 2).PasteSpecial (xlPasteValues)
+         ElseIf ws.Name = "CO" Then
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(4, 2), templatebook.Worksheets(outSheet).Cells(lastrow_template, 2)).Copy
+            ЦО.Cells(3, 1).PasteSpecial (xlPasteValues)
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(3, 3), templatebook.Worksheets(outSheet).Cells(lastrow_template, lastclmn_template)).Copy
+            ЦО.Cells(2, 2).PasteSpecial (xlPasteValues)
+         ElseIf ws.Name = "YAA" Then
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(4, 2), templatebook.Worksheets(outSheet).Cells(lastrow_template, 2)).Copy
+            ЯА.Cells(3, 1).PasteSpecial (xlPasteValues)
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(3, 3), templatebook.Worksheets(outSheet).Cells(lastrow_template, lastclmn_template)).Copy
+            ЯА.Cells(2, 2).PasteSpecial (xlPasteValues)
+         ElseIf ws.Name = "YAI" Then
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(4, 2), templatebook.Worksheets(outSheet).Cells(lastrow_template, 2)).Copy
+            ЯИ.Cells(3, 1).PasteSpecial (xlPasteValues)
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(3, 3), templatebook.Worksheets(outSheet).Cells(lastrow_template, lastclmn_template)).Copy
+            ЯИ.Cells(2, 2).PasteSpecial (xlPasteValues)
+         ElseIf ws.Name = "YAL" Then
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(4, 2), templatebook.Worksheets(outSheet).Cells(lastrow_template, 2)).Copy
+            ЯЛ.Cells(3, 1).PasteSpecial (xlPasteValues)
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(3, 3), templatebook.Worksheets(outSheet).Cells(lastrow_template, lastclmn_template)).Copy
+            ЯЛ.Cells(2, 2).PasteSpecial (xlPasteValues)
+         ElseIf ws.Name = "YAP" Then
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(4, 2), templatebook.Worksheets(outSheet).Cells(lastrow_template, 2)).Copy
+            ЯП.Cells(3, 1).PasteSpecial (xlPasteValues)
+            templatebook.Worksheets(outSheet).Range(templatebook.Worksheets(outSheet).Cells(3, 3), templatebook.Worksheets(outSheet).Cells(lastrow_template, lastclmn_template)).Copy
+            ЯП.Cells(2, 2).PasteSpecial (xlPasteValues)
+         End If
+  Next ws
+End Sub
+
+Sub horror()
+    Dim cell As Range
+        Dim FGBDR As Worksheet
+        Dim FGRKR As Worksheet
+     Dim cell2 As Range
+'        Call declareVars
+'БДР
+ ' 6 level
+    БДР.Range(БДР.Cells(1, 2), БДР.Cells(2, lastColumn3(БДР))).NumberFormat = "@"
+        For Each cellchecked In БДР.Range(БДР.Cells(1, 2), БДР.Cells(1, lastColumn3(БДР)))
+            Set FGBDR = Worksheets("FGBDR")
+        Set cell2 = FGBDR.Range(FGBDR.Cells(2, 2), FGBDR.Cells(2, lastColumn3(FGBDR)))
+            For Each cell In cell2
+                    If cellchecked = cell And БДР.Cells(cellchecked.Row + 1, cellchecked.Column) = FGBDR.Cells(cell.Row + 1, cell.Column) And FGBDR.Cells(cell.Row + 4, cell.Column) = True Then
+                        Range("Daughter_clmn").Copy
+                        БДР.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+                        
+                    End If
+            Next cell
+        Next cellchecked
+        
+    Range("Parent_clmn").Copy ' 5 level
+    БДР.Range(БДР.Cells(1, 2), БДР.Cells(2, lastColumn3(БДР))).NumberFormat = "@"
+        For Each cellchecked In БДР.Range(БДР.Cells(1, 2), БДР.Cells(1, lastColumn3(БДР)))
+            Set FGBDR = Worksheets("FGBDR")
+        Set cell2 = FGBDR.Range(FGBDR.Cells(2, 2), FGBDR.Cells(2, lastColumn3(FGBDR)))
+            For Each cell In cell2
+                    If cellchecked = cell And БДР.Cells(cellchecked.Row + 1, cellchecked.Column) = FGBDR.Cells(cell.Row + 1, cell.Column) And FGBDR.Cells(cell.Row + 3, cell.Column) = True Then
+                        Range("Parent_clmn").Copy
+                        БДР.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+                    БДР.Range(БДР.Cells(cellchecked.Row + 2, cellchecked.Column), БДР.Cells(lastRow(БДР), cellchecked.Column)).Font.Bold = True
+                    End If
+            Next cell
+        Next cellchecked
+
+   Set SWEET4 = Worksheets("SWITCH")    '4 level
+   SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4))).NumberFormat = "@"
+          For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+              Set FGBDR = Worksheets("FGBDR")
+              FGBDR.Range(FGBDR.Cells(2, 2), FGBDR.Cells(2, lastColumn3(FGBDR))).NumberFormat = "@"
+                For Each cell In FGBDR.Range(FGBDR.Cells(2, 2), FGBDR.Cells(2, lastColumn3(FGBDR)))
+                     Set БДР = Worksheets("БДР")
+                     Set Sl = БДР.UsedRange.Find("Чистая прибыль (убыток)")
+                     Set Cf = БДР.UsedRange.Find("Bыpyчкa")
+                     БДР.Range(БДР.Cells(1, 2), БДР.Cells(1, lastColumn3(БДР))).NumberFormat = "@"
+                        For Each cellchecked In БДР.Range(БДР.Cells(1, 2), БДР.Cells(1, lastColumn3(БДР)))
+                             If cellchecked = cell = cell2 And БДР.Cells(cellchecked.Row + 1, cellchecked.Column) = FGBDR.Cells(cell.Row + 1, cell.Column) And FGBDR.Cells(cell.Row + 2, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                Range("tot_fact").Copy
+                                БДР.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(БДР, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With БДР.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО СКЕ " & monthrename
+                                    End With
+                                    
+                                БДР.Range(БДР.Cells(cellchecked.Row + 2, cellchecked.Column), БДР.Cells(lastRow(БДР), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc2").Copy
+                                БДР.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                БДР.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And БДР.Cells(cellchecked.Row + 1, cellchecked.Column) = FGBDR.Cells(cell.Row + 1, cell.Column) And FGBDR.Cells(cell.Row + 2, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                Range("Total_mart").Copy
+                                БДР.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(БДР, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With БДР.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО СКЕ " & monthrename
+                                    End With
+                                    
+                                БДР.Range(БДР.Cells(cellchecked.Row + 2, cellchecked.Column), БДР.Cells(lastRow(БДР), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc3").Copy
+                                БДР.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                БДР.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And БДР.Cells(cellchecked.Row + 1, cellchecked.Column) = FGBDR.Cells(cell.Row + 1, cell.Column) And FGBDR.Cells(cell.Row + 2, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = False Then
+                                Range("Total_clmn").Copy
+                                БДР.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(БДР, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With БДР.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО СКЕ " & monthrename
+                                    End With
+'                                БДР.Range(БДР.Cells(cellchecked.row + 2, cellchecked.Column), БДР.Cells(lastRow(БДР), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc").Copy
+                                БДР.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                БДР.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             End If
+                        Next cellchecked
+                Next cell
+         Next cell2
+                             
+                             
+                    
+ ' ЯА
+ ' 6 level
+    ЯА.Range(ЯА.Cells(1, 2), ЯА.Cells(2, lastColumn3(ЯА))).NumberFormat = "@"
+        For Each cellchecked In ЯА.Range(ЯА.Cells(1, 2), ЯА.Cells(1, lastColumn3(ЯА)))
+            Set FGRKR = Worksheets("FGRKR")
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                        If cellchecked = cell And ЯА.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 4, cell.Column) = True Then
+                            Range("Daughter_clmn").Copy
+                            ЯА.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                        End If
+                Next cell
+        Next cellchecked
+ 
+ 
+ ' 5 level
+    Range("Parent_clmn").Copy
+    ЯА.Range(ЯА.Cells(1, 2), ЯА.Cells(2, lastColumn3(ЯА))).NumberFormat = "@"
+        For Each cellchecked In ЯА.Range(ЯА.Cells(1, 2), ЯА.Cells(1, lastColumn3(ЯА)))
+            Set FGRKR = Worksheets("FGRKR")
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                        If cellchecked = cell And ЯА.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True Then
+                            Range("Parent_clmn").Copy
+                            ЯА.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                            ЯА.Range(ЯА.Cells(cellchecked.Row + 2, cellchecked.Column), ЯА.Cells(lastRow(БДР), cellchecked.Column)).Font.Bold = True
+                        End If
+                Next cell
+        Next cellchecked
+    '4 level
+     Set SWEET4 = Worksheets("SWITCH")    '4 level
+   SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4))).NumberFormat = "@"
+          For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+              Set FGRKR = Worksheets("FGRKR")
+              FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR))).NumberFormat = "@"
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                     Set ЯА = Worksheets("ЯА")
+                     Set Sl = ЯА.UsedRange.Find("Чистая прибыль (убыток)")
+                     Set Cf = ЯА.UsedRange.Find("Bыpyчкa")
+                     ЯА.Range(ЯА.Cells(1, 2), ЯА.Cells(1, lastColumn3(ЯА))).NumberFormat = "@"
+                        For Each cellchecked In ЯА.Range(ЯА.Cells(1, 2), ЯА.Cells(1, lastColumn3(ЯА)))
+                             If cellchecked = cell = cell2 And ЯА.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 2, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                Range("tot_fact").Copy
+                                ЯА.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯА, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯА.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО СКЕ " & monthrename
+                                    End With
+                                    
+                                ЯА.Range(ЯА.Cells(cellchecked.Row + 2, cellchecked.Column), ЯА.Cells(lastRow(ЯА), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc2").Copy
+                                ЯА.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯА.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯА.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 2, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                Range("Total_mart").Copy
+                                ЯА.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯА, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯА.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО СКЕ " & monthrename
+                                    End With
+                                    
+                                ЯА.Range(ЯА.Cells(cellchecked.Row + 2, cellchecked.Column), ЯА.Cells(lastRow(ЯА), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc3").Copy
+                                ЯА.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯА.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯА.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 2, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = False Then
+                                Range("Total_clmn").Copy
+                                ЯА.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯА, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯА.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО СКЕ " & monthrename
+                                    End With
+                                ЯА.Range(ЯА.Cells(cellchecked.Row + 2, cellchecked.Column), ЯА.Cells(lastRow(ЯА), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc").Copy
+                                ЯА.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯА.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             End If
+                        Next cellchecked
+                Next cell
+         Next cell2
+         
+  ' ЯЛ  ЯП  ЦО
+  
+  'ЯЛ
+  '6level
+   ЯЛ.Range(ЯЛ.Cells(1, 2), ЯЛ.Cells(2, lastColumn3(ЯЛ))).NumberFormat = "@"
+        For Each cellchecked In ЯЛ.Range(ЯЛ.Cells(1, 2), ЯЛ.Cells(1, lastColumn3(ЯЛ)))
+            Set FGRKR = Worksheets("FGMKR")
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                        If cellchecked = cell And ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 4, cell.Column) = True Then
+                            Range("Daughter_clmn").Copy
+                            ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                        End If
+                Next cell
+        Next cellchecked
+  
+    '5 level
+     Set SWEET4 = Worksheets("SWITCH")    '4 level
+   SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4))).NumberFormat = "@"
+          For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+              Set FGRKR = Worksheets("FGMKR")
+              FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR))).NumberFormat = "@"
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                     Set ЯЛ = Worksheets("ЯЛ")
+                     Set Sl = ЯЛ.UsedRange.Find("Чистая прибыль (убыток)")
+                     Set Cf = ЯЛ.UsedRange.Find("Bыpyчкa")
+                     ЯЛ.Range(ЯЛ.Cells(1, 2), ЯЛ.Cells(1, lastColumn3(ЯЛ))).NumberFormat = "@"
+                        For Each cellchecked In ЯЛ.Range(ЯЛ.Cells(1, 2), ЯЛ.Cells(1, lastColumn3(ЯЛ)))
+                             If cellchecked = cell = cell2 And ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                Range("tot_fact").Copy
+                                ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯЛ, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯЛ.Name & " " & monthrename
+                                    End With
+                                    
+                                ЯЛ.Range(ЯЛ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯЛ.Cells(lastRow(ЯЛ), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc2").Copy
+                                ЯЛ.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯЛ.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                Range("Total_mart").Copy
+                                ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯЛ, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯЛ.Name & " " & monthrename
+                                    End With
+                                    
+                                ЯЛ.Range(ЯЛ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯЛ.Cells(lastRow(ЯЛ), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc3").Copy
+                                ЯЛ.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯЛ.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = False Then
+                                Range("Total_clmn").Copy
+                                ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯЛ, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯЛ.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯЛ.Name & " " & monthrename
+                                    End With
+                                ЯЛ.Range(ЯЛ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯЛ.Cells(lastRow(ЯЛ), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc").Copy
+                                ЯЛ.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯЛ.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             End If
+                        Next cellchecked
+                Next cell
+         Next cell2
+         
+         'ЯП
+  '6level
+   ЯП.Range(ЯП.Cells(1, 2), ЯП.Cells(2, lastColumn3(ЯП))).NumberFormat = "@"
+        For Each cellchecked In ЯП.Range(ЯП.Cells(1, 2), ЯП.Cells(1, lastColumn3(ЯП)))
+            Set FGRKR = Worksheets("FGPMR")
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                        If cellchecked = cell And ЯП.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 4, cell.Column) = True Then
+                            Range("Daughter_clmn").Copy
+                            ЯП.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                        End If
+                Next cell
+        Next cellchecked
+  
+    '5 level
+     Set SWEET4 = Worksheets("SWITCH")    '4 level
+   SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4))).NumberFormat = "@"
+          For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+              Set FGRKR = Worksheets("FGPMR")
+              FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR))).NumberFormat = "@"
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                     Set ЯП = Worksheets("ЯП")
+                     Set Sl = ЯП.UsedRange.Find("Чистая прибыль (убыток)")
+                     Set Cf = ЯП.UsedRange.Find("Bыpyчкa")
+                     ЯП.Range(ЯП.Cells(1, 2), ЯП.Cells(1, lastColumn3(ЯП))).NumberFormat = "@"
+                        For Each cellchecked In ЯП.Range(ЯП.Cells(1, 2), ЯП.Cells(1, lastColumn3(ЯП)))
+                             If cellchecked = cell = cell2 And ЯП.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                Range("tot_fact").Copy
+                                ЯП.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯП, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯП.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯП.Name & " " & monthrename
+                                    End With
+                                    
+                                ЯП.Range(ЯП.Cells(cellchecked.Row + 2, cellchecked.Column), ЯП.Cells(lastRow(ЯП), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc2").Copy
+                                ЯП.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯП.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯП.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                Range("Total_mart").Copy
+                                ЯП.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯП, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯП.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯП.Name & " " & monthrename
+                                    End With
+                                    
+                                ЯП.Range(ЯП.Cells(cellchecked.Row + 2, cellchecked.Column), ЯП.Cells(lastRow(ЯП), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc3").Copy
+                                ЯП.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯП.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯП.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = False Then
+                                Range("Total_clmn").Copy
+                                ЯП.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯП, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯП.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯП.Name & " " & monthrename
+                                    End With
+                                ЯП.Range(ЯП.Cells(cellchecked.Row + 2, cellchecked.Column), ЯП.Cells(lastRow(ЯП), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc").Copy
+                                ЯП.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯП.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             End If
+                        Next cellchecked
+                Next cell
+         Next cell2
+        
+         'ЦО
+  '6level
+   ЦО.Range(ЦО.Cells(1, 2), ЦО.Cells(2, lastColumn3(ЦО))).NumberFormat = "@"
+        For Each cellchecked In ЦО.Range(ЦО.Cells(1, 2), ЦО.Cells(1, lastColumn3(ЦО)))
+            Set FGRKR = Worksheets("FGYAM")
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                        If cellchecked = cell And ЦО.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 4, cell.Column) = True Then
+                            Range("Daughter_clmn").Copy
+                            ЦО.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                        End If
+                Next cell
+        Next cellchecked
+  
+    '5 level
+     Set SWEET4 = Worksheets("SWITCH")    '4 level
+   SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4))).NumberFormat = "@"
+          For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+              Set FGRKR = Worksheets("FGYAM")
+              FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR))).NumberFormat = "@"
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                     Set ЦО = Worksheets("ЦО")
+                     Set Sl = ЦО.UsedRange.Find("Чистая прибыль (убыток)")
+                     Set Cf = ЦО.UsedRange.Find("Bыpyчкa")
+                     ЦО.Range(ЦО.Cells(1, 2), ЦО.Cells(1, lastColumn3(ЦО))).NumberFormat = "@"
+                        For Each cellchecked In ЦО.Range(ЦО.Cells(1, 2), ЦО.Cells(1, lastColumn3(ЦО)))
+                             If cellchecked = cell = cell2 And ЦО.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                Range("tot_fact").Copy
+                                ЦО.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЦО, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЦО.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЦО.Name & " " & monthrename
+                                    End With
+                                    
+                                ЦО.Range(ЦО.Cells(cellchecked.Row + 2, cellchecked.Column), ЦО.Cells(lastRow(ЦО), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc2").Copy
+                                ЦО.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЦО.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЦО.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                Range("Total_mart").Copy
+                                ЦО.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЦО, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЦО.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЦО.Name & " " & monthrename
+                                    End With
+                                    
+                                ЦО.Range(ЦО.Cells(cellchecked.Row + 2, cellchecked.Column), ЦО.Cells(lastRow(ЦО), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc3").Copy
+                                ЦО.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЦО.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЦО.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = False Then
+                                Range("Total_clmn").Copy
+                                ЦО.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЦО, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЦО.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЦО.Name & " " & monthrename
+                                    End With
+                                ЦО.Range(ЦО.Cells(cellchecked.Row + 2, cellchecked.Column), ЦО.Cells(lastRow(ЦО), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc").Copy
+                                ЦО.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЦО.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             End If
+                        Next cellchecked
+                Next cell
+         Next cell2
+         
+     'ЯИ
+  '6level
+   ЯИ.Range(ЯИ.Cells(3, 2), ЯИ.Cells(3, lastColumn3(ЯИ))).NumberFormat = "@"
+        For Each cellchecked In ЯИ.Range(ЯИ.Cells(3, 2), ЯИ.Cells(3, lastColumn3(ЯИ)))
+            Set FGRKR = Worksheets("FGYAI")
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                        If cellchecked = cell And ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 4, cell.Column) = True Then
+'                            Range("Daughter_clmn").Copy
+                            Range("Parent_clmn").Copy
+                            ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                            ЯИ.Range(ЯИ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯИ.Cells(lastRow(ЯИ), cellchecked.Column)).Font.Bold = True
+                        End If
+                Next cell
+        Next cellchecked
+  
+    '5 level
+     Set SWEET4 = Worksheets("SWITCH")    '4 level
+   SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4))).NumberFormat = "@"
+          For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+              Set FGRKR = Worksheets("FGYAI")
+              FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR))).NumberFormat = "@"
+                For Each cell In FGRKR.Range(FGRKR.Cells(2, 2), FGRKR.Cells(2, lastColumn3(FGRKR)))
+                     Set ЯИ = Worksheets("ЯИ")
+                     Set Sl = ЯИ.UsedRange.Find("Чистая прибыль (убыток)")
+                     Set Cf = ЯИ.UsedRange.Find("Bыpyчкa")
+                     ЯИ.Range(ЯИ.Cells(3, 2), ЯИ.Cells(3, lastColumn3(ЯИ))).NumberFormat = "@"
+                        For Each cellchecked In ЯИ.Range(ЯИ.Cells(3, 2), ЯИ.Cells(3, lastColumn3(ЯИ)))
+                             If cellchecked = cell = cell2 And ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                Range("tot_fact").Copy
+                                ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯИ, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯИ.Name & " " & monthrename
+                                    End With
+                                    
+                                ЯИ.Range(ЯИ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯИ.Cells(lastRow(ЯИ), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc2").Copy
+                                ЯИ.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯИ.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                Range("Total_mart").Copy
+                                ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯИ, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯИ.Name & " " & monthrename
+                                    End With
+                                    
+                                ЯИ.Range(ЯИ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯИ.Cells(lastRow(ЯИ), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc3").Copy
+                                ЯИ.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯИ.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             ElseIf cellchecked = cell = cell2 And ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column) = FGRKR.Cells(cell.Row + 1, cell.Column) And FGRKR.Cells(cell.Row + 3, cell.Column) = True And SWEET4.Cells(cell2.Row + 1, cell2.Column) = False And SWEET4.Cells(cell2.Row + 2, cell2.Column) = False Then
+                                Range("Total_clmn").Copy
+                                ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column).PasteSpecial Paste:=xlPasteFormats
+                                Call MonthsReplace2(ЯИ, cellchecked.Row, cellchecked.Column, cellchecked.Row, cellchecked.Column, monthrename)
+                                    With ЯИ.Cells(cellchecked.Row + 1, cellchecked.Column)
+                                        .NumberFormat = "@"
+                                        .Value = "ИТОГО " & ЯИ.Name & " " & monthrename
+                                    End With
+                                ЯИ.Range(ЯИ.Cells(cellchecked.Row + 2, cellchecked.Column), ЯИ.Cells(lastRow(ЯИ), cellchecked.Column)).Font.Bold = True
+                                Range("tot_proc").Copy
+                                ЯИ.Cells(cellchecked.Row, cellchecked.Column).PasteSpecial
+                                ЯИ.Cells(cellchecked.Row, cellchecked.Column).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                             End If
+                        Next cellchecked
+                Next cell
+         Next cell2
+End Sub
+
+'Раскрашивание основных строк+ширина столбцов   '+
+Sub Coloring_rows()
+'    Call declareVars
+    For Each templsheeet In templatebook.Worksheets
+            lastclmn_template = lastColumn3(templsheeet)
+            lastrow_template = lastRow(templsheeet)
+            templsheeet.Range(templsheeet.Cells(1, 1), templsheeet.Cells(1, lastclmn_template)).ColumnWidth = 18
+            Range("L2_n").Copy
+                If templsheeet.Name = "КЯ" Or templsheeet.Name = "ЯА" Or templsheeet.Name = "ЯЛ" Or templsheeet.Name = "ЯП" Or templsheeet.Name = "ЯИ" Or templsheeet.Name = "ЦО" Then
+                    templsheeet.Range(templsheeet.Cells(3, 1), templsheeet.Cells(lastrow_template, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+                    n = 0
+                    Levels = 2
+                        Do Until Levels = 6
+                           For Each cellchecked In Level.Range(Level.Cells(3, Levels), Level.Cells(lastrow_template - n, Levels))
+                                If cellchecked = True Then
+                                   equalNamerow = cellchecked.Row
+                                   If Levels = 2 Then
+                                     Range("L_1").Copy
+                                     templsheeet.Cells(equalNamerow, 1).PasteSpecial Paste:=xlPasteFormats
+                                     Range("L_1").Copy
+                                     templsheeet.Range(templsheeet.Cells(equalNamerow + n, 2), templsheeet.Cells(equalNamerow + n, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+                                                                         
+                                   ElseIf Levels = 3 Then
+                                     Range("L2_1").Copy
+                                     templsheeet.Cells(equalNamerow, 1).PasteSpecial Paste:=xlPasteFormats
+                                     templsheeet.Range(templsheeet.Cells(equalNamerow + n, 2), templsheeet.Cells(equalNamerow + n, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+                                                                         
+                                   ElseIf Levels = 4 Then
+                                     Range("L3_1").Copy
+                                     templsheeet.Cells(equalNamerow, 1).PasteSpecial Paste:=xlPasteFormats
+                                     templsheeet.Range(templsheeet.Cells(equalNamerow + n, 2), templsheeet.Cells(equalNamerow + n, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+                                                                     
+                                   ElseIf Levels = 5 Then
+                                     Range("L5_1").Copy
+                                     templsheeet.Cells(equalNamerow, 1).PasteSpecial Paste:=xlPasteFormats
+                                     templsheeet.Range(templsheeet.Cells(equalNamerow + n, 2), templsheeet.Cells(equalNamerow + n, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+                                   End If
+                                End If
+                           Next cellchecked
+                        Levels = Levels + 1
+                        Loop
+'                 ElseIf templsheeet.Name = "ЯИ" Then
+'                     templsheeet.Range(templsheeet.Cells(3, 2), templsheeet.Cells(lastrow_template, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+'                     n = 2
+'                     Levels = 2
+'                        Do Until Levels = 5
+'                           For Each cellchecked In Level.Range(Level.Cells(3, Levels), Level.Cells(lastrow_template - n, Levels))
+'                               If cellchecked = True Then
+'                                   equalNamerow = cellchecked.Row
+'                                       If Levels = 2 Then
+'                                         Range("L_1").Copy
+'                                         templsheeet.Cells(equalNamerow + n, 1).PasteSpecial Paste:=xlPasteFormats
+'                                         Range("L_1").Copy Destination:=templsheeet.Range(templsheeet.Cells(equalNamerow + n, 2), templsheeet.Cells(equalNamerow + n, lastclmn_template))
+'                                       ElseIf Levels = 3 Then
+'                                         Range("L2_1").Copy
+'                                         templsheeet.Cells(equalNamerow + n, 1).PasteSpecial Paste:=xlPasteFormats
+'                                       ElseIf Levels = 4 Then
+'                                         Range("L3_1").Copy
+'                                         templsheeet.Cells(equalNamerow + n, 1).PasteSpecial Paste:=xlPasteFormats
+'                                       End If
+'                               End If
+'                           Next cellchecked
+'                        Levels = Levels + 1
+'                        Loop
+'                 End If
+        Next templsheeet
+
+End Sub
+
+'Группировки по строкам
+Sub Group_row()         '+
+'     Call declareVars
+     Dim l As Long
+        For Each templsheeet In templatebook.Worksheets
+            
+'                If templsheeet.Name = "БДР" Or templsheeet.Name = "ЯА" Or templsheeet.Name = "ЦО" Or templsheeet.Name = "ЯЛ" Or templsheeet.Name = "ЯП" Then
+                    lastclmn_template = lastColumn6(templsheeet)
+                    lastrow_template = lastRow(templsheeet)
+                    lastRow_Level = lastrow_template
+                    n = 0
+'                ElseIf templsheeet.Name = "ЯИ" Then
+'                lastclmn_template = lastColumn6(templsheeet)
+'            lastrow_template = lastRow(templsheeet)
+'                    n = 2
+'                    lastRow_Level = lastrow_template - n
+'
+'                End If
+       
+'  If templsheeet.Name = "БДР" Or templsheeet.Name = "ЯА" Or templsheeet.Name = "ЦО" Or templsheeet.Name = "ЯЛ" Or templsheeet.Name = "ЯП" Or templsheeet.Name = "ЯИ" Then
+    Levels = 6
+        Do Until Levels = 1    'КАк станет равным 4 , то перестанет делать
+        cellchecked2 = lastRow_Level
+        endrowresearch = lastRow_Level
+            Do Until cellchecked2 = 2 'как только станет равным  2, то произойдет выход из цикла
+                If Level.Cells(cellchecked2, Levels) = True Then
+                    equalNamerow = cellchecked2
+                    Set numChildRow = New Collection
+                    rowChecked2 = 0
+                     
+                      l = 1
+                    
+                        For Each cellchecked In Level.Range(Level.Cells(equalNamerow + 1, Levels + l), Level.Cells(endrowresearch, Levels + l))
+                                   
+                                      If cellchecked = True Then
+                                        rowChecked2 = cellchecked.Row
+                                                 numChildRow.Add rowChecked2
+                                      End If
+                        Next cellchecked
+                         If rowChecked2 <> 0 Then
+
+                                    GroupRowF = numChildRow(1)
+                                     GroupRowL = numChildRow(numChildRow.Count)
+                                    templsheeet.Range(templsheeet.Cells(GroupRowF + n, 1), templsheeet.Cells(GroupRowL + n, 1)).Rows.Group
+                        End If
+                    endrowresearch = equalNamerow - 1
+                End If
+            cellchecked2 = cellchecked2 - 1
+            Loop
+         Levels = Levels - 1
+        Loop
+' End If
+                Next templsheeet
+End Sub
+
+'Группировки по колонкам и форматы столбцов
+Sub Group_column()       '+
+'     Call declareVars
+    Dim world As String
+     Dim k As Long
+      Dim cell As Range
+      Dim cell2  As Range
+     Dim l As Long ' переход по уровнЦО Levels
+      Call MonthsReplace4(SWEET4, 2, 3, 2, lastColumn3(SWEET4))
+        For Each templsheeet In templatebook.Worksheets
+                 
+                If templsheeet.Name = "БДР" Or templsheeet.Name = "ЯА" Or templsheeet.Name = "ЦО" Or templsheeet.Name = "ЯЛ" Or templsheeet.Name = "ЯП" Then
+                    lastclmn_template = lastColumn6(templsheeet)
+                    lastrow_template = lastRow(templsheeet)
+                      If templsheeet.Name = "БДР" Then
+                        Set GroupClmntemplsheeet = Worksheets("FGBDR")
+                      ElseIf templsheeet.Name = "ЯА" Then
+                        Set GroupClmntemplsheeet = Worksheets("FGRKR")
+                      ElseIf templsheeet.Name = "ЦО" Then
+                        Set GroupClmntemplsheeet = Worksheets("FGYAM")
+                      ElseIf templsheeet.Name = "ЯЛ" Then
+                        Set GroupClmntemplsheeet = Worksheets("FGMKR")
+                      ElseIf templsheeet.Name = "ЯП" Then
+                        Set GroupClmntemplsheeet = Worksheets("FGPMR")
+                      End If
+                    lastclmn_fg = lastColumn3(GroupClmntemplsheeet)
+                    n = 0
+                ElseIf templsheeet.Name = "ЯИ" Then
+                lastclmn_template = lastColumn6(templsheeet)
+            lastrow_template = lastRow(templsheeet)
+                    n = 2
+                    Set GroupClmntemplsheeet = Worksheets("FGYAI")
+                    lastclmn_fg = lastColumn3(GroupClmntemplsheeet)
+                End If
+                
+               If templsheeet.Name = "БДР" Then
+                stopgrouplevels = 3
+               Else:
+                stopgrouplevels = 4
+               End If
+              
+               
+               
+  If templsheeet.Name = "БДР" Or templsheeet.Name = "ЯА" Or templsheeet.Name = "ЦО" Or templsheeet.Name = "ЯЛ" Or templsheeet.Name = "ЯП" Or templsheeet.Name = "ЯИ" Then
+    Levels = 6      'Группировки и формат
+        Do Until Levels = stopgrouplevels    'КАк станет равным stopgrouplevels , то перестанет делать
+        cellchecked2 = lastclmn_fg
+        endclmnresearch = lastclmn_fg
+            Do Until cellchecked2 = 1 'как только станет равным  1, то произойдет выход из цикла
+                If GroupClmntemplsheeet.Cells(Levels, cellchecked2) = True Then
+                    equalNameclmn = cellchecked2
+                    Set numChildRow = New Collection
+                    rowChecked2 = 0
+                      l = 1
+                        For Each cellchecked In GroupClmntemplsheeet.Range(GroupClmntemplsheeet.Cells(Levels + l, equalNameclmn + 1), GroupClmntemplsheeet.Cells(Levels + l, endclmnresearch))
+
+                                      If cellchecked = True Then
+                                        rowChecked2 = cellchecked.Column
+                                                 numChildRow.Add rowChecked2
+                                      End If
+                        Next cellchecked
+'                                If templsheeet.Name = "ЯА" And Levels = 4 Then
+'                                    Set numChildRow = New Collection
+'
+'                                                    For Each cellchecked In GroupClmntemplsheeet.Range(GroupClmntemplsheeet.Cells(Levels + 2, equalNameclmn + 1), GroupClmntemplsheeet.Cells(Levels + 2, endclmnresearch))
+'                                                        If cellchecked = True Then
+'                                                            rowChecked2 = cellchecked.Column
+'                                                            numChildRow.Add rowChecked2
+'                                                        End If
+'                                                    Next cellchecked
+'                                        If rowChecked2 <> 0 Then
+'                                                   GroupClmnF = numChildRow(1) - 1
+'                                                    GroupClmnL = numChildRow(numChildRow.Count)
+'                                        End If
+'                                End If
+                        If rowChecked2 <> 0 Then
+'                                    If (templsheeet.Name = "ЯА" And Levels = 4) Then
+'
+'                                    Else:
+                                             GroupClmnF = numChildRow(1)
+                                             GroupClmnL = numChildRow(numChildRow.Count)
+'                                    End If
+                                    templsheeet.Range(templsheeet.Cells(1, GroupClmnF), templsheeet.Cells(1, GroupClmnL)).Columns.Group
+                                    If stopgrouplevels = 4 Then
+                                        If Levels = 5 And GroupClmnF <> GroupClmnL Then
+                                            world = Cells(1 + n, GroupClmnF)
+                                            Call MonthsReplace3(templsheeet, 1 + n, GroupClmnF, 1 + n, GroupClmnF, world)
+                                            Range("Month").Copy
+                                                With templsheeet.Range(templsheeet.Cells(1 + n, GroupClmnF), templsheeet.Cells(1 + n, GroupClmnL))
+                                                    .PasteSpecial Paste:=xlPasteFormats
+                                                    .ClearContents
+                                                    .MergeCells = True
+                                                    .NumberFormat = "@"
+                                                    .Value = world
+                                                    .HorizontalAlignment = xlCenter
+                                                    .VerticalAlignment = xlCenter
+                                                End With
+                                        ElseIf Levels = 5 And GroupClmnF = GroupClmnL Then
+                                            world = Cells(1 + n, GroupClmnF)
+                                            Call MonthsReplace3(templsheeet, 1 + n, GroupClmnF, 1 + n, GroupClmnF, world)
+                                            Range("Month").Copy
+                                                With templsheeet.Cells(1 + n, GroupClmnF)
+                                                    .PasteSpecial Paste:=xlPasteFormats
+                                                    .ClearContents
+                                                    .NumberFormat = "@"
+                                                    .Value = world
+                                                    .HorizontalAlignment = xlCenter
+                                                    .VerticalAlignment = xlCenter
+                                                End With
+                                        End If
+                                    ElseIf stopgrouplevels = 3 Then
+                                        If Levels = 4 And GroupClmnF <> GroupClmnL Then
+                                            world = Cells(1 + n, GroupClmnF)
+                                            Call MonthsReplace3(templsheeet, 1 + n, GroupClmnF, 1 + n, GroupClmnF, world)
+                                            Range("Month").Copy
+                                                With templsheeet.Range(templsheeet.Cells(1 + n, GroupClmnF), templsheeet.Cells(1 + n, GroupClmnL))
+                                                    .PasteSpecial Paste:=xlPasteFormats
+                                                    .ClearContents
+                                                    .MergeCells = True
+                                                    .NumberFormat = "@"
+                                                    .Value = world
+                                                    .HorizontalAlignment = xlCenter
+                                                    .VerticalAlignment = xlCenter
+                                                End With
+                                        ElseIf Levels = 4 And GroupClmnF = GroupClmnL Then
+                                            world = Cells(1 + n, GroupClmnF)
+                                            Call MonthsReplace3(templsheeet, 1 + n, GroupClmnF, 1 + n, GroupClmnF, world)
+                                            Range("Month").Copy
+                                                With templsheeet.Cells(1 + n, GroupClmnF)
+                                                    .PasteSpecial Paste:=xlPasteFormats
+                                                    .ClearContents
+                                                    .NumberFormat = "@"
+                                                    .Value = world
+                                                    .HorizontalAlignment = xlCenter
+                                                    .VerticalAlignment = xlCenter
+                                                End With
+                                        End If
+                                   End If
+                        End If
+                        If Levels = 4 Then
+                             
+                             
+                              k = 1 + n
+                             Set cell = templsheeet.Cells(k, equalNameclmn + 1)
+
+                              If Left(cell.Value, 5) = "ИТОГО" Then
+                                            Range("tot_proc").Copy
+                                            templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial
+                              Else:
+                                For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+                                    If cell = cell2 Then
+                                        If SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                             Range("tot_proc2").Copy
+                                             templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial
+                                        Else:
+                                            Range("tot_proc").Copy
+                                            templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial
+                                        End If
+                                        If SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                             Range("tot_proc3").Copy
+                                             templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial
+                                        End If
+                                    End If
+                                Next cell2
+                              End If
+
+''                             Range("tot_proc").Copy
+'                             templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial
+'''                             Special Paste:=xlPasteFormats
+                             Set Sl = templsheeet.UsedRange.Find("Чистая прибыль (убыток)")
+                             Set Cf = templsheeet.UsedRange.Find("Bыpyчкa")
+                             templsheeet.Cells(1 + n, equalNameclmn).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+'''''                             Range("Total_clmn").Copy
+'''''                             templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+
+
+
+                                Set cell = templsheeet.Cells(k, equalNameclmn + 1)
+                              If Left(cell.Value, 5) = "ИТОГО" Then
+                                            Range("Total_clmn").Copy
+                                            templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                              Else:
+                                For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+                                    If cell = cell2 Then
+                                        If SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                             Range("tot_fact").Copy
+                                             templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                        Else:
+                                            Range("Total_clmn").Copy
+                                            templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                        End If
+                                        If SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                             Range("Total_mart").Copy
+                                             templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                        End If
+                                    End If
+                                Next cell2
+                              End If
+'                              templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                             Call MonthsReplace2(templsheeet, k, equalNameclmn + 1, k, equalNameclmn + 1, monthrename)
+                                With templsheeet.Cells(2 + n, equalNameclmn)
+''''                                    .PasteSpecial Paste:=xlPasteFormats
+                                    .NumberFormat = "@"
+                                    .Value = "ИТОГО " & monthrename
+                                End With
+                             templsheeet.Range(templsheeet.Cells(4 + n, equalNameclmn), templsheeet.Cells(lastrow_template, equalNameclmn)).Font.Bold = True
+                        ElseIf Levels = 5 Then
+'
+                             Range("Parent_clmn").Copy
+                             templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                             templsheeet.Range(templsheeet.Cells(4 + n, equalNameclmn), templsheeet.Cells(lastrow_template, equalNameclmn)).Font.Bold = True
+                                If stopgrouplevels = 4 Then
+
+                                     k = 1 + n
+                                     Set cell = templsheeet.Cells(k, equalNameclmn + 1)
+                                          If Left(cell.Value, 5) = "ИТОГО" Then
+                                                        Range("Total_clmn").Copy
+                                                         templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                          Else:
+                                            For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+                                                If InStr(cell, cell2) > 0 Then
+                                                    If SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                                         Range("tot_fact").Copy
+                                                          templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                                    Else:
+                                                        Range("Total_clmn").Copy
+                                                         templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                                    End If
+                                                    If SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                                         Range("Total_mart").Copy
+                                                          templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                                    End If
+                                                End If
+                                            Next cell2
+                                          End If
+'
+''                                     templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+'
+'
+'''''                              Dim cell As Range
+                                          k = 1 + n
+                                        Set cell = templsheeet.Cells(k, equalNameclmn + 1)
+''''                                        Dim cell2  As Range
+                                          If Left(cell.Value, 5) = "ИТОГО" Then
+                                                        Range("tot_proc").Copy
+                                                        templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial 'Paste:=xlPasteFormats
+                                          Else:
+                                            For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+                                                If cell = cell2 Then
+                                                    If SWEET4.Cells(cell2.Row + 1, cell2.Column) = True Then
+                                                         Range("tot_proc2").Copy
+                                                         templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial 'Paste:=xlPasteFormats
+                                                    Else:
+                                                        Range("tot_proc").Copy
+                                                        templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial 'Paste:=xlPasteFormats
+                                                    End If
+                                                    If SWEET4.Cells(cell2.Row + 2, cell2.Column) = True Then
+                                                         Range("tot_proc3").Copy
+                                                         templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial 'Paste:=xlPasteFormats
+                                                    End If
+                                                End If
+                                            Next cell2
+                                          End If
+'
+''
+'
+'
+''''                                 Range("tot_proc2").Copy
+''                                    templsheeet.Cells(1 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                                    Set Sl = templsheeet.UsedRange.Find("Чистая прибыль (убыток)")
+                                    Set Cf = templsheeet.UsedRange.Find("Bыpyчкa")
+                                    templsheeet.Cells(1 + n, equalNameclmn).FormulaR1C1 = "=IFERROR(R" & Sl.Row & "C/R" & Cf.Row & "C,0)"
+                                    k = 1 + n
+                                    Call MonthsReplace2(templsheeet, k, equalNameclmn + 1, k, equalNameclmn + 1, monthrename)
+                                       With templsheeet.Cells(2 + n, equalNameclmn)
+                                           .NumberFormat = "@"
+                                           .Value = "ИТОГО " & templsheeet.Name & " " & monthrename
+                                       End With
+                                End If
+                        ElseIf Levels = 6 Then
+                             Range("Daughter_clmn").Copy
+                             templsheeet.Cells(2 + n, equalNameclmn).PasteSpecial Paste:=xlPasteFormats
+                        End If
+                    endclmnresearch = equalNameclmn - 1
+                End If
+            cellchecked2 = cellchecked2 - 1
+            Loop
+         Levels = Levels - 1
+        Loop
+''''              For Each cellchecked In templsheeet.Range(templsheeet.Cells(4 + n, 1), templsheeet.Cells(lastrow_template, 1))
+''''                If cellchecked = "ВыручкаФормула" Then
+''''                    cellchecked = "Выручка"
+''''                End If
+''''              Next cellchecked
+
+ End If
+ templsheeet.Outline.ShowLevels RowLevels:=1, ColumnLevels:=1
+
+                Next templsheeet
+End Sub
+
+
+
+
+'Операция по замене названий месяцев
+Sub MonthsReplaceMain()    '+
+'    Call declareVars
+      For Each templsheeet In templatebook.Worksheets
+            If templsheeet.Name = "БДР" Or templsheeet.Name = "ЯА" Or templsheeet.Name = "ЦО" Then
+                lastclmn_template = lastColumn(templsheeet)
+                Call MonthsReplace(templsheeet, 1, 2, 1, lastclmn_template)
+                Range("Month").Copy
+                templsheeet.Range(templsheeet.Cells(1, 2), templsheeet.Cells(1, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+             ElseIf templsheeet.Name = "ЯЛ" Or templsheeet.Name = "ЯП" Then
+                lastclmn_template = lastColumn(templsheeet)
+                Call MonthsReplace3(templsheeet, 1, 2, 1, lastclmn_template)
+                 Range("Month").Copy
+                 templsheeet.Range(templsheeet.Cells(1, 2), templsheeet.Cells(1, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+             ElseIf templsheeet.Name = "ЯИ" Then
+                 lastclmn_template = lastColumn3(templsheeet)
+                 Call MonthsReplace(templsheeet, 3, 2, 3, lastclmn_template)
+                 Range("Month").Copy
+                 templsheeet.Range(templsheeet.Cells(3, 2), templsheeet.Cells(3, lastclmn_template)).PasteSpecial Paste:=xlPasteFormats
+             End If
+        Next templsheeet
+End Sub
+
+'Операция по замене названий месяцев
+Sub MonthsReplace4(ws As Worksheet, row1 As Long, column1 As Long, row2 As Long, column2 As Long) '+
+err_subname = "MonthsReplace4"
+Dim cell As Range
+'Set cell = ws.Cells(row1, column1)
+ For Each cell In ws.Range(ws.Cells(row1, column1), ws.Cells(row2, column2))
+    
+    cell.NumberFormat = "@"
+    
+    If InStr(cell, "Jan") > 0 Then cell.Value = "Январь 20" & Right(cell, 2)
+    If InStr(cell, "Feb") > 0 Then cell.Value = "Февраль 20" & Right(cell, 2)
+    If InStr(cell, "Mar") > 0 Then cell.Value = "Март 20" & Right(cell, 2)
+    If InStr(cell, "Apr") > 0 Then cell.Value = "Апрель 20" & Right(cell, 2)
+    If InStr(cell, "May") > 0 Then cell.Value = "Май 20" & Right(cell, 2)
+    If InStr(cell, "Jun") > 0 Then cell.Value = "Июнь 20" & Right(cell, 2)
+    If InStr(cell, "Jul") > 0 Then cell.Value = "Июль 20" & Right(cell, 2)
+    If InStr(cell, "Aug") > 0 Then cell.Value = "Август 20" & Right(cell, 2)
+    If InStr(cell, "Sep") > 0 Then cell.Value = "Сентябрь 20" & Right(cell, 2)
+    If InStr(cell, "Oct") > 0 Then cell.Value = "Октябрь 20" & Right(cell, 2)
+    If InStr(cell, "Nov") > 0 Then cell.Value = "Ноябрь 20" & Right(cell, 2)
+    If InStr(cell, "Dec") > 0 Then cell.Value = "Декабрь 20" & Right(cell, 2)
+'    If InStr(cell, "FY") > 0 Then cell.Value = "ИТОГО 20" & Right(cell, 2)
+'    End If
+   Next cell
+
+
+End Sub
+
+
+'Операция по замене названий месяцев
+Sub MonthsReplace(ws As Worksheet, row1 As Long, column1 As Long, row2 As Long, column2 As Long) '+
+err_subname = "MonthsReplace"
+Dim cell As Range
+'Set cell = ws.Cells(row1, column1)
+ For Each cell In ws.Range(ws.Cells(row1, column1), ws.Cells(row2, column2))
+    
+    cell.NumberFormat = "@"
+    
+    If InStr(cell, "Jan") > 0 Then cell.Value = "янв." & Right(cell, 2)
+    If InStr(cell, "Feb") > 0 Then cell.Value = "фев." & Right(cell, 2)
+    If InStr(cell, "Mar") > 0 Then cell.Value = "мар." & Right(cell, 2)
+    If InStr(cell, "Apr") > 0 Then cell.Value = "апр." & Right(cell, 2)
+    If InStr(cell, "May") > 0 Then cell.Value = "май." & Right(cell, 2)
+    If InStr(cell, "Jun") > 0 Then cell.Value = "июн." & Right(cell, 2)
+    If InStr(cell, "Jul") > 0 Then cell.Value = "июл." & Right(cell, 2)
+    If InStr(cell, "Aug") > 0 Then cell.Value = "авг." & Right(cell, 2)
+    If InStr(cell, "Sep") > 0 Then cell.Value = "сен." & Right(cell, 2)
+    If InStr(cell, "Oct") > 0 Then cell.Value = "окт." & Right(cell, 2)
+    If InStr(cell, "Nov") > 0 Then cell.Value = "ноя." & Right(cell, 2)
+    If InStr(cell, "Dec") > 0 Then cell.Value = "дек." & Right(cell, 2)
+    If InStr(cell, "FY") > 0 Then cell.Value = "ИТОГО 20" & Right(cell, 2)
+'    End If
+   Next cell
+
+
+End Sub
+
+'Операция по замене названий месяцев
+Sub MonthsReplace2(ByVal ws As Worksheet, ByVal row1 As Long, ByVal column1 As Long, ByVal row2 As Long, ByVal column2 As Long, ByRef monthrename) '+
+err_subname = "MonthsReplace2"
+Dim cell As Range
+'Dim cell2  As Range
+'Dim cell3  As Range
+'Set cell = ws.Cells(row1, column1)
+'
+'    For Each cell2 In SWEET4.Range(SWEET4.Cells(2, 3), SWEET4.Cells(2, lastColumn3(SWEET4)))
+'        If InStr(cell, cell2) > 0 Then
+'            If SWEET4.Cells(cell2.row + 1, cell2.Column) = True Then
+'                 Range("tot_fact").Copy
+'            ElseIf SWEET4.Cells(cell2.row + 2, cell2.Column) = True Then
+'                 Range("Total_mart").Copy
+'            Else:
+'                Range("Total_clmn").Copy
+'            End If
+'        End If
+'    Next cell2
+'Set cell = ws.Cells(row1, column1)
+ For Each cell In ws.Range(ws.Cells(row1, column1), ws.Cells(row2, column2))
+    
+    cell.NumberFormat = "@"
+    
+    If InStr(cell, "Jan") > 0 Or InStr(cell, "янв") Or InStr(cell, "Январь") Then monthrename = "01-20" & Right(cell, 2)
+    If InStr(cell, "Feb") > 0 Or InStr(cell, "фев") Or InStr(cell, "Февраль") Then monthrename = "02-20" & Right(cell, 2)
+    If InStr(cell, "Mar") > 0 Or InStr(cell, "мар") Or InStr(cell, "Март") Then monthrename = "03-20" & Right(cell, 2)
+    If InStr(cell, "Apr") > 0 Or InStr(cell, "апр") Or InStr(cell, "Апрель") Then monthrename = "04-20" & Right(cell, 2)
+    If InStr(cell, "May") > 0 Or InStr(cell, "май") Or InStr(cell, "Май") Then monthrename = "05-20" & Right(cell, 2)
+    If InStr(cell, "Jun") > 0 Or InStr(cell, "июн") Or InStr(cell, "Июнь") Then monthrename = "06-20" & Right(cell, 2)
+    If InStr(cell, "Jul") > 0 Or InStr(cell, "июл") Or InStr(cell, "Июль") Then monthrename = "07-20" & Right(cell, 2)
+    If InStr(cell, "Aug") > 0 Or InStr(cell, "авг") Or InStr(cell, "Август") Then monthrename = "08-20" & Right(cell, 2)
+    If InStr(cell, "Sep") > 0 Or InStr(cell, "сен") Or InStr(cell, "Сентябрь") Then monthrename = "09-20" & Right(cell, 2)
+    If InStr(cell, "Oct") > 0 Or InStr(cell, "окт") Or InStr(cell, "Октябрь") Then monthrename = "10-20" & Right(cell, 2)
+    If InStr(cell, "Nov") > 0 Or InStr(cell, "ноя") Or InStr(cell, "Ноябрь") Then monthrename = "11-20" & Right(cell, 2)
+    If InStr(cell, "Dec") > 0 Or InStr(cell, "дек") Or InStr(cell, "Декабрь") Then monthrename = "12-20" & Right(cell, 2)
+    If InStr(cell, "FY") > 0 Or InStr(cell, "ИТОГО") Then monthrename = "20" & Right(cell, 2)
+'    End If
+   Next cell
+
+
+End Sub
+'Операция по замене названий месяцев
+Sub MonthsReplace3(ByVal ws As Worksheet, ByVal row1 As Long, ByVal column1 As Long, ByVal row2 As Long, ByVal column2 As Long, ByRef world)      '+
+err_subname = "MonthsReplace3"
+Dim cell As Range
+'Set cell = ws.Cells(row1, column1)
+ For Each cell In ws.Range(ws.Cells(row1, column1), ws.Cells(row2, column2))
+    
+    cell.NumberFormat = "@"
+    
+    If InStr(cell, "Jan") > 0 Or InStr(cell, "янв") Then world = "Январь 20" & Right(cell, 2)
+    If InStr(cell, "Feb") > 0 Or InStr(cell, "фев") Then world = "Февраль 20" & Right(cell, 2)
+    If InStr(cell, "Mar") > 0 Or InStr(cell, "мар") Then world = "Март 20" & Right(cell, 2)
+    If InStr(cell, "Apr") > 0 Or InStr(cell, "апр") Then world = "Апрель 20" & Right(cell, 2)
+    If InStr(cell, "May") > 0 Or InStr(cell, "май") Then world = "Май 20" & Right(cell, 2)
+    If InStr(cell, "Jun") > 0 Or InStr(cell, "июн") Then world = "Июнь 20" & Right(cell, 2)
+    If InStr(cell, "Jul") > 0 Or InStr(cell, "июл") Then world = "Июль 20" & Right(cell, 2)
+    If InStr(cell, "Aug") > 0 Or InStr(cell, "авг") Then world = "Август 20" & Right(cell, 2)
+    If InStr(cell, "Sep") > 0 Or InStr(cell, "сен") Then world = "Сентябрь 20" & Right(cell, 2)
+    If InStr(cell, "Oct") > 0 Or InStr(cell, "окт") Then world = "Октябрь 20" & Right(cell, 2)
+    If InStr(cell, "Nov") > 0 Or InStr(cell, "ноя") Then world = "Ноябрь 20" & Right(cell, 2)
+    If InStr(cell, "Dec") > 0 Or InStr(cell, "дек") Then world = "Декабрь 20" & Right(cell, 2)
+    If InStr(cell, "FY") > 0 Or InStr(cell, "ИТОГО") Then world = "ИТОГО 20" & Right(cell, 2)
+'    End If
+   Next cell
+
+
+End Sub
+
+'Starting a procedure to save a worksheet as new workbook
+Sub saveWSAsWB(sheetName As String, outputPath As String)
+    Dim wb As Workbook
+    Range("A1").Activate
+    Set wb = Workbooks.Add
+    Set templatebook = ThisWorkbook
+    templatebook.Sheets(sheetName).Copy before:=wb.Sheets(1)
+    wb.Activate
+    
+    Application.DisplayAlerts = False
+    wb.Sheets("Лист1").Delete
+    Application.DisplayAlerts = True
+    
+    
+    wb.SaveAs outputPath
+    wb.Close
+End Sub
+
+Function lastRow(ws As Worksheet) As Long
+lastRow = ws.Cells.SpecialCells(xlCellTypeLastCell).Row
+End Function
+
+Function lastColumn(ws As Worksheet) As Long
+    lastColumn = ws.Cells(1, Columns.Count).End(xlToLeft).Column
+End Function
+Function lastColumn3(ws As Worksheet) As Long
+    lastColumn3 = ws.Cells(3, Columns.Count).End(xlToLeft).Column
+End Function
+Function lastColumn6(ws As Worksheet) As Long
+    lastColumn6 = ws.Cells(6, Columns.Count).End(xlToLeft).Column
+End Function
+Function SummIfs_(R1 As Range, R2 As Range, Criterial As String) As Long
+      SummIfs_.formula = "=SumIfs(" & R1 & "," & R2 & ", Criterial)"
+End Function
+
+'_____ПРОЦЕДУРА ЛОГИРОВАНИЯ ОШИБОК_____
+
+Sub err_Log(err_subname As String)
+
+Dim err_LSname As String, err_LS_LastRow As Long, err_LS_LastColumn As Long
+Dim err_Clipboard As String, err_cb As New DataObject
+Dim err_loopsheet As Worksheet, test_errsheet As Worksheet, err_sheet As Worksheet, err_lrow As Long
+
+'   Копирование параметров листа с ошибкой
+
+err_LSname = ActiveSheet.Name
+err_LS_LastRow = ActiveSheet.Cells.SpecialCells(xlCellTypeLastCell).Row
+err_LS_LastColumn = ActiveSheet.UsedRange.Columns(ActiveSheet.UsedRange.Columns.Count).Column
+err_cb.GetFromClipboard
+If err_cb.GetFormat(1) = True Then err_Clipboard = err_cb.GetText
+
+'   Проверка на наличие листа
+
+For Each err_loopsheet In ActiveWorkbook.Sheets
+   If err_loopsheet.Name = "#Errors" Then GoTo ExitLoop
+Next err_loopsheet
+
+'   Создание структуры листа логирования
+
+Sheets.Add(before:=Sheets(1)).Name = "#Errors"
+Sheets("#Errors").Tab.Color = 255
+Set err_sheet = Worksheets("#Errors")
+
+With err_sheet.Rows("1:1")
+    .Font.Bold = True
+    .HorizontalAlignment = xlCenter
+    .VerticalAlignment = xlCenter
+    .WrapText = True
+End With
+
+err_sheet.Cells(1, 1) = "№ п/п"
+err_sheet.Cells(1, 2) = "Описание ошибки"
+err_sheet.Cells(1, 3) = "Номер ошибки"
+err_sheet.Cells(1, 4) = "Процедура с ошибкой"
+err_sheet.Cells(1, 5) = "Лист с ошибкой"
+err_sheet.Cells(1, 6) = "Последняя строка листа"
+err_sheet.Cells(1, 7) = "Последняя колонка листа"
+err_sheet.Cells(1, 8) = "В буфере обмена на момент ошибки"
+
+err_sheet.Columns("A").ColumnWidth = 6.5
+err_sheet.Columns("B").ColumnWidth = 22
+err_sheet.Columns("C").ColumnWidth = 7
+err_sheet.Columns("D").ColumnWidth = 12
+err_sheet.Columns("E").ColumnWidth = 16
+err_sheet.Columns("F:G").ColumnWidth = 13
+err_sheet.Columns("H").ColumnWidth = 19
+err_sheet.Rows(1).AutoFit
+
+'   Наполнение новой строки с ошибкой
+
+ExitLoop:
+Set err_sheet = Worksheets("#Errors")
+err_lrow = err_sheet.Cells(Rows.Count, 1).End(xlUp).Row + 1
+
+err_sheet.Cells(err_lrow, 1) = err_lrow - 1
+err_sheet.Cells(err_lrow, 2) = Err.Description
+err_sheet.Cells(err_lrow, 3) = Err.Number
+err_sheet.Cells(err_lrow, 4) = err_subname
+err_sheet.Cells(err_lrow, 5) = err_LSname
+err_sheet.Cells(err_lrow, 6) = err_LS_LastRow
+err_sheet.Cells(err_lrow, 7) = err_LS_LastColumn
+err_sheet.Cells(err_lrow, 8) = err_Clipboard
+
+err_sheet.Columns("B").AutoFit
+With err_sheet.Rows(err_lrow)
+    .HorizontalAlignment = xlCenter
+    .VerticalAlignment = xlCenter
+End With
+
+Worksheets(err_LSname).Activate
+Err.Clear
+
+End Sub
+
+'_____FROZE И UNFROZE_____
+
+Sub froze(Optional test As Boolean = False)
+
+    If test = False Then
+
+        Application.DisplayAlerts = False
+        Application.ScreenUpdating = False
+        Application.Calculation = xlCalculationManual
+        Application.EnableEvents = False
+        Application.AskToUpdateLinks = False
+
+    End If
+
+End Sub
+Sub saveOutputs()
+'    Call declareVars
+    Dim wb As Workbook
+    БДР.Name = БДР.Name & " " & Right(БДР.Cells(2, 2), 4)
+    world = Left(SWEET4.Cells(3, 2), 3)
+        If world = "МНВ" Then
+        
+        ElseIf world = "Фак" Then
+             world = "Факт"
+        ElseIf world = "Баз" Then
+             world = "План"
+        End If
+    ЯИ.Cells(1, 1) = "БДР ""Ястро-Инновации"" " & Right(БДР.Cells(2, 2), 4) & " " & world
+    Call DelettttGabidge2
+    
+    
+    
+    Set wb = Application.Workbooks.Add(xlWBATWorksheet)
+    
+    ThisWorkbook.Sheets("ЦО").Copy After:=wb.Sheets(1)
+    ThisWorkbook.Sheets("ЯИ").Copy After:=wb.Sheets(1)
+    ThisWorkbook.Sheets("ЯП").Copy After:=wb.Sheets(1)
+    ThisWorkbook.Sheets("ЯЛ").Copy After:=wb.Sheets(1)
+    ThisWorkbook.Sheets("ЯА").Copy After:=wb.Sheets(1)
+    БДР.Copy After:=wb.Sheets(1)
+    wb.Sheets(1).Delete
+    
+'    wb.Sheets("report").Select
+    wb.SaveAs (ThisWorkbook.Path & "\output\template.xlsx")
+    wb.Close
+
+End Sub
+
+
+
+Sub unfroze(Optional test As Boolean = False)
+
+    If test = False Then
+
+        Application.EnableEvents = True
+        Application.Calculation = xlCalculationAutomatic
+        Application.ScreenUpdating = True
+        Application.AskToUpdateLinks = True
+        Application.DisplayAlerts = True
+    End If
+
+End Sub
+
+Sub DelGabidge()
+'      Call declareVars
+     'удаляем мусор ()
+     Worksheets("KYA").Delete
+     Worksheets("CO").Delete
+    Worksheets("YAA").Delete
+    Worksheets("YAI").Delete
+    Worksheets("YAL").Delete
+    Worksheets("YAP").Delete
+End Sub
+Sub DelettttGabidge2()
+'      Call declareVars
+     'удаляем мусор ()
+     Worksheets("FGRKR").Delete
+     Worksheets("FGMKR").Delete
+    Worksheets("FGPMR").Delete
+    Worksheets("FGYAM").Delete
+    Worksheets("FGBDR").Delete
+    Worksheets("FGYAI").Delete
+End Sub
+
+
+
+
+
+
+
+
+
+
